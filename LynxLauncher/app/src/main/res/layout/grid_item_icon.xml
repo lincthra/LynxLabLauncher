@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/imageViewGridIcon"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:scaleType="fitCenter"
+        tools:src="@android:drawable/sym_def_app_icon"
+        android:contentDescription="@string/service_icon_description" />
+
+    <TextView
+        android:id="@+id/textViewGridIconName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textSize="12sp"
+        android:layout_marginTop="4dp"
+        android:gravity="center"
+        android:maxLines="2"
+        android:ellipsize="end"
+        tools:text="Icon Name" />
+</LinearLayout>

@@ -23,8 +23,16 @@ class ConfiguredServiceAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val item = configuredServices[position]
         holder.serviceName.text = item.name
-        holder.serviceUrl.text = item.url
+        holder.serviceUrl.text = item.url // Consider showing URL and Port separately or combined
         holder.serviceIcon.setImageResource(item.iconResId) // Placeholder icon logic
+
+        // Display the port
+        if (item.port != null) {
+            holder.servicePort.text = "Port: ${item.port}"
+            holder.servicePort.visibility = View.VISIBLE
+        } else {
+            holder.servicePort.visibility = View.GONE
+        }
 
         holder.removeButton.setOnClickListener { onRemoveClick(item) }
         holder.testButton.setOnClickListener { onTestClick(item) }
@@ -49,6 +57,7 @@ class ConfiguredServiceAdapter(
         val serviceIcon: ImageView = itemView.findViewById(R.id.imageViewConfiguredServiceIcon)
         val serviceName: TextView = itemView.findViewById(R.id.textViewConfiguredServiceName)
         val serviceUrl: TextView = itemView.findViewById(R.id.textViewConfiguredServiceUrl)
+        val servicePort: TextView = itemView.findViewById(R.id.textViewConfiguredServicePort) // Added
         val removeButton: Button = itemView.findViewById(R.id.buttonRemoveService)
         val testButton: Button = itemView.findViewById(R.id.buttonTestService)
     }
