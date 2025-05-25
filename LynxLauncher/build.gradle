@@ -1,0 +1,12 @@
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    //trick: In PGP v1.x, plugins are applied in the order they are listed in the plugins block.
+    // Apply the Android Application plugin first...
+    id("com.android.application") version "7.4.2" apply false
+    // ...then apply the Kotlin Android plugin.
+    id("org.jetbrains.kotlin.android") version "1.8.0" apply false
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}

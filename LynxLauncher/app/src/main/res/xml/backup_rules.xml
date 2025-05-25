@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<full-backup-content>
+    <!-- TODO: Add any files/directories you want to include in backups -->
+    <!--
+    <include domain="file" path="."/>
+    <include domain="database" path="."/>
+    <include domain="sharedpref" path="."/>
+    <include domain="external" path="."/>
+    -->
+    <exclude domain="file" path="device_specific_config.xml"/>
+</full-backup-content>
