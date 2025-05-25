@@ -17,7 +17,12 @@ class ServiceRepository(context: Context) {
         val json = sharedPreferences.getString(servicesKey, null)
         return if (json != null) {
             val type = object : TypeToken<MutableList<ServiceItem>>() {}.type
-            gson.fromJson(json, type)
+            try {
+                gson.fromJson(json, type) ?: mutableListOf() // Return empty list if fromJson returns null
+            } catch (e: com.google.gson.JsonSyntaxException) {
+                android.util.Log.e("ServiceRepository", "Error parsing services JSON", e)
+                mutableListOf() // Return empty list on parsing error
+            }
         } else {
             mutableListOf()
         }

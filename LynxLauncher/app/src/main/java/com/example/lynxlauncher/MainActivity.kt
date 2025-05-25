@@ -38,6 +38,7 @@ class MainActivity : AppCompatActivity(), ItemDragListener, ServiceItemClickList
 
     private fun loadServicesAndUpdateAdapter() {
         val servicesFromRepo = serviceRepository.getAllServices()
+        android.util.Log.d("MainActivity", "Services from repo: $servicesFromRepo") // Logging
         displayedServiceItems.clear()
         
         servicesFromRepo.forEach { serviceItem ->
@@ -49,9 +50,11 @@ class MainActivity : AppCompatActivity(), ItemDragListener, ServiceItemClickList
             }
             displayedServiceItems.add(serviceItem.copy(iconResId = iconRes))
         }
+        android.util.Log.d("MainActivity", "Displayed service items: $displayedServiceItems") // Logging
 
         if (::serviceAdapter.isInitialized) {
             serviceAdapter.updateServices(displayedServiceItems)
+            android.util.Log.d("MainActivity", "Adapter updated with items.") // Logging
         }
     }
 
@@ -128,19 +131,31 @@ class MainActivity : AppCompatActivity(), ItemDragListener, ServiceItemClickList
                      else "http" 
 
         val portString = serviceItem.port?.let {
+            // Only add port to string if it's not a default port for the scheme
             if (!((scheme == "http" && it == 80) || (scheme == "https" && it == 443))) ":$it" else ""
         } ?: ""
-        
-        val fullUrl = if (serviceItem.url.contains("://")) {
-            val tempUri = Uri.parse(serviceItem.url)
-            if (tempUri.port != -1) { 
-                 serviceItem.url 
-            } else { 
-                 "${tempUri.scheme}://${tempUri.host}$portString${tempUri.path ?: ""}${tempUri.query?.let {"?${it}"} ?: ""}${tempUri.fragment?.let {"#${it}"} ?: ""}"
-            }
-        } else {
-            "$scheme://${serviceItem.url}$portString"
+
+        // Normalize the base URL: remove any existing scheme or port, as we'll add them based on serviceItem.port
+        var host = serviceItem.url
+        if (host.contains("://")) {
+            host = host.substringAfter("://")
         }
+        // Remove any port and path from the host string for clean reconstruction
+        host = host.split("/").first().split(":").first()
+        
+        // Path and query handling: Re-append if they existed
+        var pathAndQuery = ""
+        if (serviceItem.url.contains("/")) {
+            pathAndQuery = serviceItem.url.substring(serviceItem.url.indexOf("/"))
+        }
+
+
+        // Construct the full URL using the determined scheme, host (from serviceItem.url, cleaned),
+        // and port (from serviceItem.port via portString).
+        val fullUrl = "$scheme://$host$portString$pathAndQuery"
+        
+        android.util.Log.d("MainActivity", "Constructed URL: $fullUrl from item: $serviceItem")
+
 
         try {
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(fullUrl))

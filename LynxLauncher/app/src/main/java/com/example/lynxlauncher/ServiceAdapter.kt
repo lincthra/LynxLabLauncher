@@ -38,6 +38,7 @@ class ServiceAdapter(
         val item = serviceItems[position]
         holder.serviceName.text = item.name
         holder.serviceIcon.setImageResource(item.iconResId) // Still using placeholder iconResId
+        android.util.Log.d("ServiceAdapter", "Binding item: ${item.name} at position $position") // Logging
 
         holder.itemView.setOnLongClickListener {
             dragListener.onItemDrag(holder)
@@ -48,7 +49,10 @@ class ServiceAdapter(
         }
     }
 
-    override fun getItemCount(): Int = serviceItems.size
+    override fun getItemCount(): Int {
+        android.util.Log.d("ServiceAdapter", "getItemCount: ${serviceItems.size}") // Logging
+        return serviceItems.size
+    }
 
     // getItemId should return a stable, unique long.
     // String.hashCode() can have collisions but is often used for simplicity if true uniqueness

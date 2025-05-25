@@ -32,6 +32,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textAppearance="?attr/textAppearanceListItemSecondary"/>
+        <TextView
+            android:id="@+id/textViewConfiguredServicePort"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textAppearance="?attr/textAppearanceListItemSecondary"
+            android:layout_marginTop="2dp"
+            tools:text="Port: 8080"/>
     </LinearLayout>
 
     <Button

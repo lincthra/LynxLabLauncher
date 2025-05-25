@@ -37,6 +37,18 @@
             android:hint="@string/hint_service_url"
             android:inputType="textUri"/>
     </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp">
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/editTextServicePort"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hint_service_port_optional"
+            android:inputType="number"/>
+    </com.google.android.material.textfield.TextInputLayout>
     
     <!-- Icon selection can be more complex, for now a placeholder -->
     <LinearLayout

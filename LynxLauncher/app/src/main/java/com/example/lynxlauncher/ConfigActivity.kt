@@ -22,7 +22,26 @@ class ConfigActivity : AppCompatActivity() {
     private val localIdCounter = AtomicLong(0) 
 
     private var currentSelectedIconResId: Int = android.R.drawable.sym_def_app_icon
-    private var currentSelectedIconIdentifier: String = "default_icon" 
+    private var currentSelectedIconIdentifier: String = "default_icon"
+
+    // Listener for IconPickerDialogFragment
+    interface IconSelectionListener {
+        fun onIconSelected(iconResId: Int, iconIdentifier: String)
+    }
+
+    companion object {
+        val availableIcons = listOf(
+            Pair(R.drawable.ic_service_home_assistant, "ic_service_home_assistant"),
+            Pair(R.drawable.ic_service_proxmox, "ic_service_proxmox"),
+            Pair(R.drawable.ic_service_frigate, "ic_service_frigate"),
+            Pair(R.drawable.ic_service_double_take, "ic_service_double_take"),
+            Pair(R.drawable.ic_service_nas, "ic_service_nas"),
+            Pair(R.drawable.ic_service_duplicati, "ic_service_duplicati"),
+            Pair(R.drawable.ic_service_compreface, "ic_service_compreface"),
+            Pair(R.drawable.ic_service_mqtt, "ic_service_mqtt"),
+            Pair(android.R.drawable.sym_def_app_icon, "default_icon")
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,26 +73,23 @@ class ConfigActivity : AppCompatActivity() {
             addService()
         }
         binding.buttonSelectIcon.setOnClickListener { // Use ViewBinding
-            val icons = listOf(
-                Pair(R.drawable.ic_service_home_assistant, "ic_service_home_assistant"),
-                Pair(R.drawable.ic_service_proxmox, "ic_service_proxmox"),
-                Pair(R.drawable.ic_service_frigate, "ic_service_frigate"),
-                Pair(R.drawable.ic_service_double_take, "ic_service_double_take"),
-                Pair(R.drawable.ic_service_nas, "ic_service_nas"),
-                Pair(R.drawable.ic_service_duplicati, "ic_service_duplicati"),
-                Pair(R.drawable.ic_service_compreface, "ic_service_compreface"),
-                Pair(R.drawable.ic_service_mqtt, "ic_service_mqtt"),
-                Pair(android.R.drawable.sym_def_app_icon, "default_icon") 
-            )
-            val currentIndex = icons.indexOfFirst { it.first == currentSelectedIconResId }
-            val nextIndex = if (currentIndex == -1 || currentIndex == icons.size - 1) 0 else currentIndex + 1
-            
-            currentSelectedIconResId = icons[nextIndex].first
-            currentSelectedIconIdentifier = icons[nextIndex].second
-            
-            binding.imageViewSelectedIcon.setImageResource(currentSelectedIconResId) // Use ViewBinding
-            Toast.makeText(this, "Icon: ${currentSelectedIconIdentifier.replace("ic_service_", "")}", Toast.LENGTH_SHORT).show()
+            // Instead of cycling, show the IconPickerDialogFragment
+            val dialog = IconPickerDialogFragment()
+            // Set ConfigActivity as the target fragment to receive callback
+            // This method is deprecated, but often used for simple DialogFragment -> Activity communication.
+            // For more complex scenarios, consider a Shared ViewModel or a Fragment Result API.
+            // dialog.setTargetFragment(null, 0) // Not applicable for Activity, use listener interface
+            dialog.show(supportFragmentManager, "IconPickerDialogFragment")
         }
+    }
+
+    // Implement the IconSelectionListener
+    // This method will be called by IconPickerDialogFragment when an icon is selected
+    fun onIconSelected(iconResId: Int, iconIdentifier: String) {
+        currentSelectedIconResId = iconResId
+        currentSelectedIconIdentifier = iconIdentifier
+        binding.imageViewSelectedIcon.setImageResource(currentSelectedIconResId)
+        Toast.makeText(this, "Icon selected: ${iconIdentifier.replace("ic_service_", "")}", Toast.LENGTH_SHORT).show()
     }
 
     private fun loadConfiguredServices() {
@@ -107,31 +123,67 @@ class ConfigActivity : AppCompatActivity() {
                 ServiceItem(serviceRepository.generateNewId(),"NAS", "mynas.local", null, R.drawable.ic_service_nas, "ic_service_nas")
             )
             placeholderServices.forEach { serviceRepository.addService(it) }
-            loadConfiguredServices() 
+            // Update displayedConfiguredServices directly instead of recursive call
+            displayedConfiguredServices.clear()
+            val updatedServicesFromRepo = serviceRepository.getAllServices()
+            updatedServicesFromRepo.forEach { serviceItem ->
+                val iconRes = if (serviceItem.iconIdentifier != null) {
+                    resources.getIdentifier(serviceItem.iconIdentifier, "drawable", packageName)
+                        .takeIf { it != 0 } ?: android.R.drawable.sym_def_app_icon
+                } else {
+                    serviceItem.iconResId.takeIf { it != 0 } ?: android.R.drawable.sym_def_app_icon
+                }
+                displayedConfiguredServices.add(
+                    ConfiguredServiceItem(
+                        localId = localIdCounter.incrementAndGet(),
+                        persistentId = serviceItem.id,
+                        name = serviceItem.name,
+                        url = serviceItem.url,
+                        port = serviceItem.port,
+                        iconResId = iconRes,
+                        iconIdentifier = serviceItem.iconIdentifier
+                    )
+                )
+            }
+            configuredServiceAdapter.notifyDataSetChanged()
         }
     }
 
     private fun addService() {
         val name = binding.editTextServiceName.text.toString().trim() // Use ViewBinding
         val urlString = binding.editTextServiceUrl.text.toString().trim() // Use ViewBinding
+        val portString = binding.editTextServicePort.text.toString().trim() // Use ViewBinding for new port field
 
         if (name.isBlank() || urlString.isBlank()) {
             Toast.makeText(this, "Service name and URL cannot be empty", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val (baseUrl, port) = parseUrlAndPort(urlString)
+        val explicitPort: Int? = if (portString.isNotEmpty()) {
+            try {
+                portString.toInt()
+            } catch (e: NumberFormatException) {
+                Toast.makeText(this, "Invalid port number", Toast.LENGTH_SHORT).show()
+                return
+            }
+        } else {
+            null
+        }
+
+        val (baseUrl, parsedUrlPort) = parseUrlAndPort(urlString, explicitPort)
         if (baseUrl.isEmpty()) {
             Toast.makeText(this, "Invalid URL format", Toast.LENGTH_SHORT).show()
             return
         }
+        
+        val finalPort = explicitPort ?: parsedUrlPort
 
         val persistentId = serviceRepository.generateNewId()
         val newServiceForRepo = ServiceItem(
             id = persistentId,
             name = name,
             url = baseUrl,
-            port = port,
+            port = finalPort, // Use the determined port
             iconResId = currentSelectedIconResId, 
             iconIdentifier = currentSelectedIconIdentifier
         )
@@ -142,7 +194,7 @@ class ConfigActivity : AppCompatActivity() {
             persistentId = persistentId,
             name = name,
             url = baseUrl,
-            port = port,
+            port = finalPort, // Use the determined port
             iconResId = currentSelectedIconResId,
             iconIdentifier = currentSelectedIconIdentifier
         )
@@ -150,6 +202,7 @@ class ConfigActivity : AppCompatActivity() {
 
         binding.editTextServiceName.text?.clear() // Use ViewBinding
         binding.editTextServiceUrl.text?.clear() // Use ViewBinding
+        binding.editTextServicePort.text?.clear() // Clear the new port field
         currentSelectedIconResId = android.R.drawable.sym_def_app_icon 
         currentSelectedIconIdentifier = "default_icon"
         binding.imageViewSelectedIcon.setImageResource(currentSelectedIconResId) // Use ViewBinding
@@ -157,18 +210,29 @@ class ConfigActivity : AppCompatActivity() {
         Toast.makeText(this, "$name added", Toast.LENGTH_SHORT).show()
     }
     
-    private fun parseUrlAndPort(urlString: String): Pair<String, Int?> {
+    private fun parseUrlAndPort(urlString: String, explicitPort: Int?): Pair<String, Int?> {
         return try {
-            val fullUrl = if (!urlString.startsWith("http://") && !urlString.startsWith("https://")) {
-                "http://$urlString" 
+            // Normalize URL by adding scheme if missing, to allow URL parsing
+            val fullUrl = if (!urlString.startsWith("http://", ignoreCase = true) && !urlString.startsWith("https://", ignoreCase = true)) {
+                "http://$urlString" // Default to http for parsing if scheme is missing
             } else {
                 urlString
             }
+            
             val parsed = URL(fullUrl)
             val host = parsed.host
-            val port = if (parsed.port != -1) parsed.port else null 
-            Pair(host, port)
+            
+            // If an explicit port is provided, it takes precedence.
+            // Otherwise, try to get it from the URL.
+            val portFromUrl = if (parsed.port != -1) parsed.port else null
+            
+            // Return the host (which is the URL without scheme, port, path for our purpose)
+            // and the port (explicit if provided, otherwise from URL, or null).
+            Pair(host, explicitPort ?: portFromUrl)
         } catch (e: Exception) {
+            // If URL parsing fails, return empty host and null port.
+            // Consider if urlString itself should be returned as host if it doesn't contain scheme/port.
+            // For now, aligning with previous behavior of returning empty on parse failure.
             Pair("", null) 
         }
     }
