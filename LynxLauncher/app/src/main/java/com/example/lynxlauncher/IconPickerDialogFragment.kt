@@ -18,12 +18,7 @@ class IconPickerDialogFragment : DialogFragment() {
         if (context is ConfigActivity.IconSelectionListener) {
             listener = context
         } else {
-            // Fallback for targetFragment, though less common for Activity communication
-            if (targetFragment is ConfigActivity.IconSelectionListener) {
-                listener = targetFragment as ConfigActivity.IconSelectionListener
-            } else {
-                throw RuntimeException("$context must implement IconSelectionListener or set target fragment")
-            }
+            throw RuntimeException("$context must implement ConfigActivity.IconSelectionListener")
         }
     }
 
