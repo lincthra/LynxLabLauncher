@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<data-extraction-rules>
+    <cloud-backup disableIfNoEncryptionCapabilities="true">
+        <!-- TODO: Add any files/directories you want to include in cloud backups -->
+        <!--
+        <include domain="file" path="."/>
+        <include domain="database" path="."/>
+        <include domain="sharedpref" path="."/>
+        <include domain="external" path="."/>
+        -->
+        <exclude domain="file" path="device_specific_log.txt"/>
+        <exclude domain="sharedpref" path="device.xml"/>
+    </cloud-backup>
+    <device-transfer>
+        <!-- TODO: Add any files/directories you want to include in device-to-device transfers -->
+        <!--
+        <include domain="file" path="."/>
+        <include domain="database" path="."/>
+        <include domain="sharedpref" path="."/>
+        <include domain="external" path="."/>
+        -->
+    </device-transfer>
+</data-extraction-rules>

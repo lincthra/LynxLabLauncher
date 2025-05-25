@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">Lynx Launcher</string>
+    <string name="service_icon_description">Service Icon</string>
+
+    <string name="title_activity_config">Configure Services</string>
+    <string name="header_add_service">Add New Service</string>
+    <string name="hint_service_name">Service Name</string>
+    <string name="hint_service_url">Service URL (e.g., http://example.com)</string>
+    <string name="desc_selected_icon">Selected service icon</string>
+    <string name="button_select_icon">Select Icon</string>
+    <string name="button_add_service">Add Service</string>
+    <string name="header_configured_services">Configured Services</string>
+
+    <string name="action_configure">Configure</string>
+    <string name="remove_service">Remove</string>
+    <string name="test_service">Test</string>
+</resources>
