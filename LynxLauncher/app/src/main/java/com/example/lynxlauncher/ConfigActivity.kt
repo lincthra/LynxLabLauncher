@@ -13,7 +13,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.util.concurrent.atomic.AtomicLong
 
-class ConfigActivity : AppCompatActivity() {
+class ConfigActivity : AppCompatActivity(), ConfigActivity.IconSelectionListener {
 
     private lateinit var binding: ActivityConfigBinding // Restored
     private lateinit var configuredServiceAdapter: ConfiguredServiceAdapter
@@ -74,18 +74,19 @@ class ConfigActivity : AppCompatActivity() {
         }
         binding.buttonSelectIcon.setOnClickListener { // Use ViewBinding
             // Instead of cycling, show the IconPickerDialogFragment
-            val dialog = IconPickerDialogFragment()
+            // val dialog = IconPickerDialogFragment()
             // Set ConfigActivity as the target fragment to receive callback
             // This method is deprecated, but often used for simple DialogFragment -> Activity communication.
             // For more complex scenarios, consider a Shared ViewModel or a Fragment Result API.
             // dialog.setTargetFragment(null, 0) // Not applicable for Activity, use listener interface
-            dialog.show(supportFragmentManager, "IconPickerDialogFragment")
+            // dialog.show(supportFragmentManager, "IconPickerDialogFragment")
+            Toast.makeText(this, "Icon selection temporarily disabled", Toast.LENGTH_SHORT).show()
         }
     }
 
     // Implement the IconSelectionListener
     // This method will be called by IconPickerDialogFragment when an icon is selected
-    fun onIconSelected(iconResId: Int, iconIdentifier: String) {
+    override fun onIconSelected(iconResId: Int, iconIdentifier: String) { // Added override
         currentSelectedIconResId = iconResId
         currentSelectedIconIdentifier = iconIdentifier
         binding.imageViewSelectedIcon.setImageResource(currentSelectedIconResId)

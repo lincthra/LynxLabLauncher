@@ -12,12 +12,12 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.example.lynxlauncher.databinding.ActivityMainBinding // Restored ViewBinding
 
-class MainActivity : AppCompatActivity(), ItemDragListener, ServiceItemClickListener {
+class MainActivity : AppCompatActivity(), ServiceItemClickListener {
 
     private lateinit var binding: ActivityMainBinding // Restored ViewBinding
     // private lateinit var recyclerViewServices: RecyclerView // Removed for ViewBinding
     private lateinit var serviceAdapter: ServiceAdapter
-    private lateinit var itemTouchHelper: ItemTouchHelper
+    // private lateinit var itemTouchHelper: ItemTouchHelper // Removed
     private val displayedServiceItems = mutableListOf<ServiceItem>() 
     private lateinit var serviceRepository: ServiceRepository
 
@@ -77,53 +77,17 @@ class MainActivity : AppCompatActivity(), ItemDragListener, ServiceItemClickList
         val spanCount = 3 
         binding.recyclerViewServices.layoutManager = GridLayoutManager(this, spanCount) // Use ViewBinding
         
-        serviceAdapter = ServiceAdapter(displayedServiceItems, this, this)
+        serviceAdapter = ServiceAdapter(displayedServiceItems, this) // Removed dragListener (this)
         binding.recyclerViewServices.adapter = serviceAdapter // Use ViewBinding
 
-        val callback = object : ItemTouchHelper.SimpleCallback(
-            ItemTouchHelper.UP or ItemTouchHelper.DOWN or ItemTouchHelper.LEFT or ItemTouchHelper.RIGHT,
-            0 
-        ) {
-            override fun onMove(
-                recyclerView: RecyclerView,
-                viewHolder: RecyclerView.ViewHolder,
-                target: RecyclerView.ViewHolder
-            ): Boolean {
-                val fromPosition = viewHolder.adapterPosition
-                val toPosition = target.adapterPosition
-                serviceAdapter.onItemMove(fromPosition, toPosition)
-                return true
-            }
-
-            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
-                // Not used
-            }
-
-            override fun isLongPressDragEnabled(): Boolean {
-                return false 
-            }
-
-            override fun onSelectedChanged(viewHolder: RecyclerView.ViewHolder?, actionState: Int) {
-                super.onSelectedChanged(viewHolder, actionState)
-                if (actionState == ItemTouchHelper.ACTION_STATE_DRAG) {
-                    viewHolder?.itemView?.alpha = 0.7f
-                }
-            }
-
-            override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
-                super.clearView(recyclerView, viewHolder)
-                viewHolder.itemView.alpha = 1.0f
-                serviceRepository.updateAllServices(serviceAdapter.serviceItems)
-                Toast.makeText(this@MainActivity, "Order saved", Toast.LENGTH_SHORT).show()
-            }
-        }
-        itemTouchHelper = ItemTouchHelper(callback)
-        itemTouchHelper.attachToRecyclerView(binding.recyclerViewServices) // Use ViewBinding
+        // val callback = object : ItemTouchHelper.SimpleCallback( ... ) // Removed
+        // itemTouchHelper = ItemTouchHelper(callback) // Removed
+        // itemTouchHelper.attachToRecyclerView(binding.recyclerViewServices) // Removed
     }
 
-    override fun onItemDrag(viewHolder: RecyclerView.ViewHolder) {
-        itemTouchHelper.startDrag(viewHolder)
-    }
+    // override fun onItemDrag(viewHolder: RecyclerView.ViewHolder) { // Removed
+    //    itemTouchHelper.startDrag(viewHolder) // Removed
+    // } // Removed
 
     override fun onServiceItemClick(serviceItem: ServiceItem) {
         val scheme = if (serviceItem.port == 443 || serviceItem.url.startsWith("https://")) "https" 
@@ -143,12 +107,17 @@ class MainActivity : AppCompatActivity(), ItemDragListener, ServiceItemClickList
         // Remove any port and path from the host string for clean reconstruction
         host = host.split("/").first().split(":").first()
         
-        // Path and query handling: Re-append if they existed
+        // PathAndQuery extraction (NEW LOGIC)
         var pathAndQuery = ""
-        if (serviceItem.url.contains("/")) {
-            pathAndQuery = serviceItem.url.substring(serviceItem.url.indexOf("/"))
+        var urlForPathExtraction = serviceItem.url
+        if (urlForPathExtraction.contains("://")) {
+            urlForPathExtraction = urlForPathExtraction.substringAfter("://") // Remove scheme
         }
-
+        // Now urlForPathExtraction is like "host.com:port/path" or "host.com/path" or "host.com:port" or "host.com"
+        val firstSlashIndex = urlForPathExtraction.indexOf('/')
+        if (firstSlashIndex != -1) {
+            pathAndQuery = urlForPathExtraction.substring(firstSlashIndex) // This will be like "/path?query"
+        }
 
         // Construct the full URL using the determined scheme, host (from serviceItem.url, cleaned),
         // and port (from serviceItem.port via portString).

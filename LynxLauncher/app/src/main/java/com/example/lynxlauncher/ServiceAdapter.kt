@@ -8,11 +8,6 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import java.util.Collections
 
-// ItemDragListener remains the same
-interface ItemDragListener {
-    fun onItemDrag(viewHolder: RecyclerView.ViewHolder)
-}
-
 // Click listener for items in MainActivity's grid
 interface ServiceItemClickListener {
     fun onServiceItemClick(serviceItem: ServiceItem)
@@ -20,7 +15,6 @@ interface ServiceItemClickListener {
 
 class ServiceAdapter(
     val serviceItems: MutableList<ServiceItem>, // Now public for MainActivity to update
-    private val dragListener: ItemDragListener,
     private val itemClickListener: ServiceItemClickListener // Add click listener
 ) : RecyclerView.Adapter<ServiceAdapter.ViewHolder>() {
 
@@ -40,10 +34,6 @@ class ServiceAdapter(
         holder.serviceIcon.setImageResource(item.iconResId) // Still using placeholder iconResId
         android.util.Log.d("ServiceAdapter", "Binding item: ${item.name} at position $position") // Logging
 
-        holder.itemView.setOnLongClickListener {
-            dragListener.onItemDrag(holder)
-            true // Consume the long click
-        }
         holder.itemView.setOnClickListener {
             itemClickListener.onServiceItemClick(item)
         }
@@ -61,20 +51,6 @@ class ServiceAdapter(
     // If ServiceItem.id is a UUID string, its hashCode() can be used.
     override fun getItemId(position: Int): Long = serviceItems[position].id.hashCode().toLong()
 
-
-    fun onItemMove(fromPosition: Int, toPosition: Int) {
-        if (fromPosition < toPosition) {
-            for (i in fromPosition until toPosition) {
-                Collections.swap(serviceItems, i, i + 1)
-            }
-        } else {
-            for (i in fromPosition downTo toPosition + 1) {
-                Collections.swap(serviceItems, i, i - 1)
-            }
-        }
-        notifyItemMoved(fromPosition, toPosition)
-        // Note: Persisting the new order should be handled in MainActivity after a move is complete.
-    }
 
     fun updateServices(newServices: List<ServiceItem>) {
         serviceItems.clear()
